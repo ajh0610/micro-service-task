@@ -1,3 +1,5 @@
+//This file is creating a connection with the postgres database
+
 const {Client} = require('pg');
 
 const User = new Client({
