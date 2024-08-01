@@ -57,7 +57,10 @@ app.post('/', async (req, res) => {
         const mailObject = {
             to: decodedToken.email,
             subject: `New Task Created: ${taskBody.title}`,
-            html: `Hello ${decodedToken.first_name} ${decodedToken.last_name}, <br/> A new task has been created: <br/> Title: ${taskBody.title} <br/> Description: ${taskBody.description} <br/> Status: ${taskBody.status} <br/> Due Date: ${taskBody.due_date} <br/>Thanks!`
+            html: `Hello ${decodedToken.first_name} ${decodedToken.last_name}, <br/><br/> 
+            A new task has been created: <br/><br/> Title: ${taskBody.title} <br/><br/> 
+            Description: ${taskBody.description} <br/><br/> Status: ${taskBody.status} <br/><br/> 
+            Due Date: ${taskBody.due_date} <br/><br/>Thanks!`
         };
 
         await queueEmail(mailObject);
@@ -81,11 +84,12 @@ app.get('/', async (req, res) => {
     const page = parseInt(req.query.page) || 1; // Default to page 1 if not provided
     const limit = parseInt(req.query.limit) || 10; // Default to 10 results per page if not provided
     const offset = (page - 1) * limit;
-
-    const statusValidation = taskStatusSchema.safeParse(status);
-    
-    if(!statusValidation.success){
-        return res.status(401).json(statusValidation.error.errors);
+    if(status){
+        const statusValidation = taskStatusSchema.safeParse(status);
+        
+        if(!statusValidation.success){
+            return res.status(400).json(statusValidation.error.errors);
+        }
     }
 
     try {
@@ -98,7 +102,7 @@ app.get('/', async (req, res) => {
         if (conditions.length > 0) {
             selectQuery += ' WHERE ' + conditions.join(' AND ');
         }
-
+        selectQuery += ` ORDER BY id`
         selectQuery += ` LIMIT ${limit} OFFSET ${offset}`;
 
         const result = await Task.query(selectQuery);
@@ -116,17 +120,31 @@ app.get('/', async (req, res) => {
 app.patch('/delete', async (req, res)=>{
 
     const deleteId = req.query.id;
+    const token = req.headers.authorization;
+    const parsedToken = token.split(' ')[1];
+    const decodedToken = jwt.decode(parsedToken);
 
     try{
-        const deleteQuery = `UPDATE tasks SET is_deleted = true WHERE id = ${deleteId}`
+        const deleteQuery = `UPDATE tasks SET is_deleted = true WHERE id = $1 RETURNING *`
 
-        const result = await Task.query(deleteQuery);
+        const result = await Task.query(deleteQuery, [deleteId]);
 
         if(result.rowCount == 0){
             return res.status(404).json({
                 message: "Task not found!"
             })
         }
+        const taskBody = result.rows[0];
+
+        const mailObject = {
+            to: decodedToken.email,
+            subject: `Task Deleted: ${taskBody.title}`,
+            html: `Hello ${decodedToken?.first_name} ${decodedToken?.last_name}, <br/><br/> 
+            Task with title: ${taskBody?.title} and description: ${taskBody?.description} has been deleted. 
+            To revert this operation contact the admin.<br/><br/>Thanks!`
+        };
+
+        await queueEmail(mailObject);
 
         res.status(200).json({
             message: "Task deleted succesfully"
@@ -146,24 +164,37 @@ app.patch('/updatestatus', async (req, res)=>{
 
     const statusValidation = taskStatusSchema.safeParse(taskStatus);   
     if(!statusValidation.success){
-        return res.status(401).json(statusValidation.error.errors);
+        return res.status(400).json(statusValidation.error.errors);
     }
+
+    const token = req.headers.authorization;
+    const parsedToken = token.split(' ')[1];
+    const decodedToken = jwt.decode(parsedToken);
 
     try{
 
-        const updateQuery = `UPDATE tasks SET status = '${taskStatus}' WHERE id = ${taskId};`;
-        console.log(updateQuery);
-        const result = await Task.query(updateQuery);
+        const updateQuery = `UPDATE tasks SET status = $1 WHERE id = $2 RETURNING *`;
+
+        const result = await Task.query(updateQuery, [taskStatus, taskId]);
         
         if(result.rowCount == 0){
             return res.status(404).json({
                 message: "Task not found!"
             })
         }
+        const taskBody = result.rows[0];
+        const mailObject = {
+            to: decodedToken.email,
+            subject: `Task Updated: ${taskBody.title}`,
+            html: `Hello ${decodedToken?.first_name} ${decodedToken?.last_name}, <br/><br/> 
+            The status of the task titled: ${taskBody?.title} with the description: ${taskBody?.description} 
+            has been updated to ${taskStatus}.<br/><br/>Thanks!`
+        };
         res.status(200).json({
             message: "Task updated succesfully!"
         })
 
+        await queueEmail(mailObject);
     } catch(e){
         console.error(e);
         res.status(500).json({

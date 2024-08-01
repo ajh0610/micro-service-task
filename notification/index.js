@@ -26,7 +26,6 @@ const worker = new Worker('mailing-queue', async (job) => {
     }
 
     transporter.sendMail(mailData).then((info)=>{
-        console.log(info);
         console.log("=========Email sent succesfully to", info.envelope.to[0]);
     }).catch(e=>{
         console.log(e)
