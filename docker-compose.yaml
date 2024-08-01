@@ -1,0 +1,83 @@
+version: '3.8'
+
+services:
+  api-gateway:
+    build:
+      context: ./api-gateway
+    env_file:
+      - ./api-gateway/.env
+    ports:
+      - 3000:3000
+    networks:
+      - backend
+    depends_on:
+      - user
+      - task
+
+  user:
+    build:
+      context: ./user
+    env_file:
+      - ./user/.env
+    ports:
+      - 3001:3001
+    networks:
+      - backend
+    depends_on:
+      - db
+
+  task:
+    build:
+      context: ./tasks
+    env_file:
+      - ./tasks/.env
+    ports:
+      - 3002:3002
+    networks:
+      - backend
+    depends_on:
+      - db
+      - notification
+      - redis
+
+  notification:
+    build:
+      context: ./notification
+    env_file:
+      - ./notification/.env
+    ports:
+      - 3003:3003
+    networks:
+      - backend
+    depends_on:
+      - redis
+
+  db:
+    image: postgres:13
+    environment:
+      POSTGRES_DB: genea_assignment
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: qwerty
+    ports:
+      - 5432:5432
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./db-init:/docker-entrypoint-initdb.d
+    networks:
+      - backend
+    command: ["postgres", "-c", "log_statement=all"]
+
+
+  redis:
+    image: redis:latest
+    ports:
+      - 6379:6379
+    networks:
+      - backend
+
+volumes:
+  db_data:
+
+networks:
+  backend:
+    driver: bridge
