@@ -1,8 +1,8 @@
 //This file is creating a connection with the postgres database
 
-const {Client} = require('pg');
+const {Pool} = require('pg');
 
-const User = new Client({
+const User = new Pool({
     user: process.env.DATABASE_USER_NAME,
     host: process.env.DATABASE_HOST,
     database: process.env.DATABASE_NAME,
@@ -12,7 +12,7 @@ const User = new Client({
 
 
 User.connect(function(err) {
-    if (err) throw err;
+    if (err) console.log(err);
     console.log("Connected to Postgres Server");
 });
 

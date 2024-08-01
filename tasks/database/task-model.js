@@ -1,6 +1,6 @@
-const {Client} = require('pg');
+const {Pool} = require('pg');
 
-const Task = new Client({
+const Task = new Pool({
     user: process.env.DATABASE_USER_NAME,
     host: process.env.DATABASE_HOST,
     database: process.env.DATABASE_NAME,
@@ -10,7 +10,7 @@ const Task = new Client({
 
 
 Task.connect(function(err) {
-    if (err) throw err;
+    if (err) console.log(err);
     console.log("Connected!");
 });
 
