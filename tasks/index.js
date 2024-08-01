@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const jwt = require('jsonwebtoken')
 const app = express();
-require('dotenv');
+require('dotenv').config();
 const Task = require('./database/task-model');
 const {tasksSchema, taskStatusSchema} = require('./zod/task-schema');
 const {Queue} = require('bullmq');
