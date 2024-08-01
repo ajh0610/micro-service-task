@@ -64,6 +64,7 @@ app.post('/', async (req, res) => {
         };
 
         await queueEmail(mailObject);
+        
     
         res.status(201).json({
             message: "Task created succesfully!"
