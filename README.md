@@ -14,26 +14,36 @@ project-root/
 └── notification-service/
 ```
 
-## Node JS Version
+## Docker Version
 ```
-NodeJS: v21.1.0
+v25.0.2
+```
 
-NPM: v10.2.0
+## Docker Compose Version
 ```
-## Postgres Version
+v2.24.5
 ```
-Postgres: v16.2
-```
-## Redis Verison
-```
-Redis-Cli 7.0.8
-```
+
 ## Project Setup
 
 1. Clone the repository,
-2. Create a .env file in each folder to configure environment variables. Use .env.example as reference,
-3. Open each microserice in different termianl,
-4. Run npm install,
-5. After installing all necessary packages run node index in all the termianls to run all the microserivces.
+2. Install the docker and docker compose if not already,
+3. The project folders have .env.example in each of the microservice create .env based on the example and add your credentials, 
+4. Keep the port mapping same if changed in .env files then keep in mind to change it in docker compose file,
+5. Run docker compose build and docker compose run in the root directory to start the project.
 
 
+## Important 
+
+
+The project uses redis and postgres. If there are instances running in your machine on the ports 5432 for postgres and 6379 for redis there will be issue of coliding ports. Either change all the ports in port mapping in docker compose file and .env files or disable these service in your local machine.
+
+
+
+## Docker Commands
+
+```
+docker compose build
+docker compose up
+docker compose down -v
+```
