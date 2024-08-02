@@ -20,6 +20,8 @@ const limiter = rateLimit({
 
 app.use(limiter);
 
+
+// Authenticate the user
 function authenticate(req, res, next){
 
   const token = req.headers.authorization;
@@ -42,6 +44,8 @@ const services = {
   tasksService: process.env.TASKS_SERVICE_URL,
 };
 
+// Request timeout
+
 const timeout = (ms) => (req, res, next) => {
   res.setTimeout(ms, () => {
     res.status(504).json({ error: 'Gateway Timeout' });
@@ -53,15 +57,17 @@ app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} - ${req.method} ${req.url}`);
   next();
 });
-
+// Route to users service
 app.use('/api/users', timeout(5000),(req, res) => {
   proxy.web(req, res, { target: services.userService });
 });
 
+// route to tasks service
 app.use('/api/tasks', authenticate, timeout(5000), (req, res) => {
   proxy.web(req, res, { target: services.tasksService, changeOrigin: true});
 });
 
+// handling error 
 proxy.on('error', (err, req, res) => {
   console.error('Proxy error:', err);
   if (err.code === 'ECONNRESET') {

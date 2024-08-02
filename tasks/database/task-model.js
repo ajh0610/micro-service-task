@@ -1,3 +1,5 @@
+// File for setting a connection pool with the database.
+
 const {Pool} = require('pg');
 
 const Task = new Pool({

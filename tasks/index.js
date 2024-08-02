@@ -7,12 +7,16 @@ const Task = require('./database/task-model');
 const {tasksSchema, taskStatusSchema} = require('./zod/task-schema');
 const {Queue} = require('bullmq');
 
+// Setting a new queue in redis based BullMq
+
 const mailingQueue = new Queue('mailing-queue',{
     connection:{
         host: process.env.BULLMQ_HOST ,
         port: process.env.BULLMQ_PORT
     }
 })
+
+// Add mailing inforamtion to the queue email
 
 async function queueEmail(data) {
     try {
@@ -27,6 +31,7 @@ const PORT = process.env.TASK_SERVICE_PORT;
 app.use(cors());
 app.use(express.json());
 
+// Endpoint for inserting the tasks.
 app.post('/', async (req, res) => {
 
     const token = req.headers.authorization;
@@ -79,6 +84,7 @@ app.post('/', async (req, res) => {
     }
 })
 
+// Getting the tasks
 app.get('/', async (req, res) => {
     // The tasks could be filtered by created_by and status,
     const {created_by, status} = req.query;
@@ -118,6 +124,7 @@ app.get('/', async (req, res) => {
     }
 });
 
+//Soft deleting the tasks
 app.patch('/delete', async (req, res)=>{
 
     const deleteId = req.query.id;
@@ -145,6 +152,7 @@ app.patch('/delete', async (req, res)=>{
             To revert this operation contact the admin.<br/><br/>Thanks!`
         };
 
+        // adding the mailing information to the email queue
         await queueEmail(mailObject);
 
         res.status(200).json({
@@ -157,7 +165,7 @@ app.patch('/delete', async (req, res)=>{
         })
     }
 })
-
+// updating the status.
 app.patch('/updatestatus', async (req, res)=>{
 
     const taskId = req.query.id;
@@ -191,11 +199,14 @@ app.patch('/updatestatus', async (req, res)=>{
             The status of the task titled: ${taskBody?.title} with the description: ${taskBody?.description} 
             has been updated to ${taskStatus}.<br/><br/>Thanks!`
         };
+
+        // adding the mailing information to the email queue
+
+        await queueEmail(mailObject);
         res.status(200).json({
             message: "Task updated succesfully!"
         })
 
-        await queueEmail(mailObject);
     } catch(e){
         console.error(e);
         res.status(500).json({

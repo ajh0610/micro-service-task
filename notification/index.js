@@ -17,14 +17,14 @@ let config = {
 
 let transporter = nodemailer.createTransport(config);
 
-
+// creating a worker that will fetch the newly added information to the mailing queue
 const worker = new Worker('mailing-queue', async (job) => {
 
     const mailData = {
         from: process.env.USER_EMAIL,
         ...job.data
     }
-
+    // Using nodemailer to send the mail
     transporter.sendMail(mailData).then((info)=>{
         console.log("=========Email sent succesfully to", info.envelope.to[0]);
     }).catch(e=>{
@@ -37,6 +37,8 @@ const worker = new Worker('mailing-queue', async (job) => {
         port: process.env.BULLMQ_PORT
     }
 });
+
+// Starting the server
 
 app.listen(PORT, ()=>{
     console.log(`Notification Service is lisiting on ${PORT}`)
