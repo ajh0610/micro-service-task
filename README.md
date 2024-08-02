@@ -17,13 +17,11 @@ project-root/
 ## Docker Version
 ```
 v25.0.2
-
 ```
 
 ## Docker Compose Version
 ```
 v2.24.5
-
 ```
 
 ## Project Setup
@@ -48,5 +46,4 @@ The project uses redis and postgres. If there are instances running in your mach
 docker compose build
 docker compose up
 docker compose down -v
-
 ```
